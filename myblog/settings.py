@@ -1,6 +1,6 @@
 from pathlib import Path
 
-# Базова директорія проекту
+# BASE_DIR
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Безпека
@@ -16,7 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'blog',  # додано додаток блогу
+    'blog',  # ← додано
 ]
 
 # Middleware
@@ -30,14 +30,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Корінь URL-конфіг
 ROOT_URLCONF = 'myblog.urls'
 
 # Шаблони
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # директорія для кастомних шаблонів
+        'DIRS': [ BASE_DIR / 'templates' ],  # ← додано
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -50,10 +49,9 @@ TEMPLATES = [
     },
 ]
 
-# WSGI
 WSGI_APPLICATION = 'myblog.wsgi.application'
 
-# Бази даних
+# База даних
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -61,20 +59,12 @@ DATABASES = {
     }
 }
 
-# Валідатори паролів
+# Валідатори паролів (стандартні)
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # Локалізація
@@ -85,7 +75,6 @@ USE_TZ = True
 
 # Статичні файли
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']  # папка з user-defined CSS/JS
+STATICFILES_DIRS = [ BASE_DIR / 'static' ]  # ← додано
 
-# Тип поля за замовчуванням
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
