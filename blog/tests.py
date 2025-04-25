@@ -34,4 +34,3 @@ def test_post_detail_view(client):
     response = client.get(url)
     assert response.status_code == 200
     assert 'Detail content' in response.content.decode()
-
