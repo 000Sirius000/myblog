@@ -12,6 +12,7 @@ ALLOWED_HOSTS = [
     'nikita77.pythonanywhere.com',
 ]
 
+
 # Додатки
 INSTALLED_APPS = [
     'django.contrib.admin',
