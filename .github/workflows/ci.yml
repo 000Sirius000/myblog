@@ -36,8 +36,7 @@ jobs:
     name: Deploy to PythonAnywhere via API
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -47,19 +46,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
 
-      - name: Debug PythonAnywhere auth (using /cpu/)
+      - name: Debug PythonAnywhere auth
         env:
           PA_TOKEN: ${{ secrets.PA_TOKEN }}
           PA_USER:  ${{ secrets.PA_USER }}
           PA_HOST:  ${{ secrets.PA_HOST }}
         run: |
-          echo "Testing: GET https://$PA_HOST/api/v0/user/$PA_USER/cpu/"
+          echo "Testing: GET https://${PA_HOST}/api/v0/user/${PA_USER}/cpu/"
           curl -i \
-            -H "Authorization: Token $PA_TOKEN" \
-            "https://$PA_HOST/api/v0/user/$PA_USER/cpu/" \
-            || exit 1
+            -H "Authorization: Token ${PA_TOKEN}" \
+            "https://${PA_HOST}/api/v0/user/${PA_USER}/cpu/" || exit 1
 
-      - name: Execute deploy commands via new PA console
+      - name: Create PA console and run commands
         env:
           PA_TOKEN: ${{ secrets.PA_TOKEN }}
           PA_USER:  ${{ secrets.PA_USER }}
@@ -68,25 +66,24 @@ jobs:
         run: |
           # 1) Create a new console
           console_json=$(curl -s -X POST \
-            -H "Authorization: Token $PA_TOKEN" \
-            "https://$PA_HOST/api/v0/user/$PA_USER/consoles/")
+            -H "Authorization: Token ${PA_TOKEN}" \
+            "https://${PA_HOST}/api/v0/user/${PA_USER}/consoles/")
           console_id=$(echo "$console_json" | jq -r '.id')
-          echo "Created console id: $console_id"
+          echo "Console ID: $console_id"
 
-          # 2) Send all deploy commands
-          cmd="cd $PA_REPO && \
-source /home/$PA_USER/.virtualenvs/myblogenv/bin/activate && \
-git pull origin master && \
-pip install -r $PA_REPO/requirements.txt && \
-cd $PA_REPO && \
-python manage.py migrate --no-input && \
-python manage.py collectstatic --no-input"
-          echo "Running deploy commands..."
+          # 2) Send deploy commands
+          cmd="cd ${PA_REPO} && \
+          source /home/${PA_USER}/.virtualenvs/myblogenv/bin/activate && \
+          git pull origin master && \
+          pip install -r ${PA_REPO}/requirements.txt && \
+          python manage.py migrate --no-input && \
+          python manage.py collectstatic --no-input"
+          echo "Running commands: $cmd"
           curl -s -X POST \
-            -H "Authorization: Token $PA_TOKEN" \
+            -H "Authorization: Token ${PA_TOKEN}" \
             -H "Content-Type: application/json" \
-            "https://$PA_HOST/api/v0/user/$PA_USER/consoles/$console_id/send_input/" \
-            -d "{\"input\": \"$cmd\"}"
+            "https://${PA_HOST}/api/v0/user/${PA_USER}/consoles/${console_id}/send_input/" \
+            -d "{\"input\":\"$cmd\"}"
 
       - name: Reload web app
         env:
@@ -94,7 +91,6 @@ python manage.py collectstatic --no-input"
           PA_USER:  ${{ secrets.PA_USER }}
           PA_HOST:  ${{ secrets.PA_HOST }}
         run: |
-          echo "Reloading web app..."
           curl -s -X POST \
-            -H "Authorization: Token $PA_TOKEN" \
-            "https://$PA_HOST/api/v0/user/$PA_USER/webapps/$PA_USER.pythonanywhere.com/reload/"
+            -H "Authorization: Token ${PA_TOKEN}" \
+            "https://${PA_HOST}/api/v0/user/${PA_USER}/webapps/${PA_USER}.pythonanywhere.com/reload/"
