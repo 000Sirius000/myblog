@@ -57,14 +57,28 @@ jobs:
             -H "Authorization: Token ${PA_TOKEN}" \
             "https://${PA_HOST}/api/v0/user/${PA_USER}/cpu/" || exit 1
 
-      - name: Create PA console and run deploy commands
+      - name: Close existing PA consoles
+        env:
+          PA_TOKEN: ${{ secrets.PA_TOKEN }}
+          PA_USER:  ${{ secrets.PA_USER }}
+          PA_HOST:  ${{ secrets.PA_HOST }}
+        run: |
+          all=$(curl -s -H "Authorization: Token ${PA_TOKEN}" \
+            "https://${PA_HOST}/api/v0/user/${PA_USER}/consoles/")
+          echo "$all" | jq -r '.[].id' | while read id; do
+            curl -s -X DELETE \
+              -H "Authorization: Token ${PA_TOKEN}" \
+              "https://${PA_HOST}/api/v0/user/${PA_USER}/consoles/$id/"
+          done
+
+      - name: Create PA bash-console and run deploy commands
         env:
           PA_TOKEN: ${{ secrets.PA_TOKEN }}
           PA_USER:  ${{ secrets.PA_USER }}
           PA_HOST:  ${{ secrets.PA_HOST }}
           PA_REPO:  ${{ secrets.PA_REPO_DIR }}
         run: |
-          # 1) Create a new console (explicit JSON body)
+          # 1) Create a new BASH console
           console_json=$(curl -s -X POST \
             -H "Authorization: Token ${PA_TOKEN}" \
             -H "Content-Type: application/json" \
@@ -73,7 +87,13 @@ jobs:
           echo "=== CONSOLE JSON ==="
           echo "$console_json"
 
-          # Parse console ID
+          # 2) Initialize console by loading its iframe
+          frame_url=$(echo "$console_json" | jq -r '.console_frame_url')
+          echo "Initializing console via frame URL: $frame_url"
+          curl -s -H "Authorization: Token ${PA_TOKEN}" \
+            "https://${PA_HOST}$frame_url" > /dev/null
+
+          # 3) Extract console ID
           console_id=$(echo "$console_json" | jq -r '.id')
           if [[ -z "$console_id" || "$console_id" == "null" ]]; then
             echo "ERROR: Failed to obtain console_id"
@@ -81,7 +101,7 @@ jobs:
           fi
           echo "Console ID: $console_id"
 
-          # 2) Send deploy commands
+          # 4) Send deploy commands
           cmd="cd ${PA_REPO} && \
           source /home/${PA_USER}/.virtualenvs/myblogenv/bin/activate && \
           git pull origin master && \
