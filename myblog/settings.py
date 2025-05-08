@@ -6,7 +6,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Безпека
 SECRET_KEY = 'django-insecure-mld^%wn9=v$8hw3(^8e326!d45-*0&da%z&grr(t*=6jlq=nf6'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'nikita77.pythonanywhere.com',
+]
 
 # Додатки
 INSTALLED_APPS = [
