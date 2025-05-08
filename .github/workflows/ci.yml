@@ -68,7 +68,7 @@ jobs:
           console_json=$(curl -s -X POST \
             -H "Authorization: Token ${PA_TOKEN}" \
             -H "Content-Type: application/json" \
-            -d '{}' \
+            -d '{"console_type": "bash"}' \
             "https://${PA_HOST}/api/v0/user/${PA_USER}/consoles/")
           echo "=== CONSOLE JSON ==="
           echo "$console_json"
