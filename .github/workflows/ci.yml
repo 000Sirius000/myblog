@@ -40,15 +40,12 @@ jobs:
       - name: Install jq for JSON parsing
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Debug PythonAnywhere variables and auth (using /cpu/)
+      - name: Debug PythonAnywhere auth (using /cpu/)
         env:
           PA_TOKEN: ${{ secrets.PA_TOKEN }}
           PA_USER:  ${{ secrets.PA_USER }}
           PA_HOST:  ${{ secrets.PA_HOST }}
         run: |
-          echo "PA_HOST: $PA_HOST"
-          echo "PA_USER: $PA_USER"
-          echo "PA_TOKEN (first 8 chars): ${PA_TOKEN:0:8}..."
           echo "Testing: GET https://$PA_HOST/api/v0/user/$PA_USER/cpu/"
           curl -i \
             -H "Authorization: Token $PA_TOKEN" \
@@ -57,31 +54,37 @@ jobs:
 
       - name: Pull latest code on PythonAnywhere
         env:
-          PA_TOKEN:  ${{ secrets.PA_TOKEN }}
-          PA_USER:   ${{ secrets.PA_USER }}
-          PA_HOST:   ${{ secrets.PA_HOST }}
-          PA_REPO:   ${{ secrets.PA_REPO_DIR }}
+          PA_TOKEN: ${{ secrets.PA_TOKEN }}
+          PA_USER:  ${{ secrets.PA_USER }}
+          PA_HOST:  ${{ secrets.PA_HOST }}
+          PA_REPO:  ${{ secrets.PA_REPO_DIR }}
         run: |
-          RESPONSE=$(curl -s -X POST \
-            -H "Authorization: Token $PA_TOKEN" \
-            -H "Content-Type: application/json" \
-            https://$PA_HOST/api/v0/user/$PA_USER/console/ \
-            -d "{\"command\": \"cd $PA_REPO && git pull origin master\"}")
+          echo "Pulling code..."
+          RESPONSE=$(
+            curl -s -X POST \
+              -H "Authorization: Token $PA_TOKEN" \
+              -H "Content-Type: application/json" \
+              https://$PA_HOST/api/v0/user/$PA_USER/consoles/ \
+              -d "{\"command\": \"cd $PA_REPO && git pull origin master\"}"
+          )
           echo "=== Console pull response ==="
           echo "$RESPONSE"
 
       - name: Install deps, migrate & collectstatic
         env:
-          PA_TOKEN:  ${{ secrets.PA_TOKEN }}
-          PA_USER:   ${{ secrets.PA_USER }}
-          PA_HOST:   ${{ secrets.PA_HOST }}
-          PA_REPO:   ${{ secrets.PA_REPO_DIR }}
+          PA_TOKEN: ${{ secrets.PA_TOKEN }}
+          PA_USER:  ${{ secrets.PA_USER }}
+          PA_HOST:  ${{ secrets.PA_HOST }}
+          PA_REPO:  ${{ secrets.PA_REPO_DIR }}
         run: |
-          RESPONSE=$(curl -s -X POST \
-            -H "Authorization: Token $PA_TOKEN" \
-            -H "Content-Type: application/json" \
-            https://$PA_HOST/api/v0/user/$PA_USER/console/ \
-            -d "{\"command\": \"source /home/$PA_USER/.virtualenvs/myblogenv/bin/activate && pip install -r $PA_REPO/requirements.txt && cd $PA_REPO && python manage.py migrate --no-input && python manage.py collectstatic --no-input\"}")
+          echo "Installing deps and migrating..."
+          RESPONSE=$(
+            curl -s -X POST \
+              -H "Authorization: Token $PA_TOKEN" \
+              -H "Content-Type: application/json" \
+              https://$PA_HOST/api/v0/user/$PA_USER/consoles/ \
+              -d "{\"command\": \"source /home/$PA_USER/.virtualenvs/myblogenv/bin/activate && pip install -r $PA_REPO/requirements.txt && cd $PA_REPO && python manage.py migrate --no-input && python manage.py collectstatic --no-input\"}"
+          )
           echo "=== Console migrate & static response ==="
           echo "$RESPONSE"
 
@@ -91,8 +94,11 @@ jobs:
           PA_USER:  ${{ secrets.PA_USER }}
           PA_HOST:  ${{ secrets.PA_HOST }}
         run: |
-          RESPONSE=$(curl -s -X POST \
-            -H "Authorization: Token $PA_TOKEN" \
-            https://$PA_HOST/api/v0/user/$PA_USER/webapps/$PA_USER.pythonanywhere.com/reload/)
+          echo "Reloading web app..."
+          RESPONSE=$(
+            curl -s -X POST \
+              -H "Authorization: Token $PA_TOKEN" \
+              https://$PA_HOST/api/v0/user/$PA_USER/webapps/$PA_USER.pythonanywhere.com/reload/
+          )
           echo "=== Webapp reload response ==="
           echo "$RESPONSE"
