@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 from .models import Post
 
+
 @pytest.mark.django_db
 def test_post_str():
     post = Post.objects.create(
